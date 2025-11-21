@@ -1,0 +1,5 @@
+{
+  "name": "Lordnine Tools",
+  "description": "An MVP utility hub for the game 'Lordnine: Infinite Class', featuring a world boss timer, grind tracker, build planners, checklists, and guides, inspired by Garmoth.com.",
+  "requestFramePermissions": []
+}
