@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import PageHeader from '../../components/PageHeader';
+import PageHeader from '../components/PageHeader';
 import { BOSSES, WORLD_BOSSES, FIELD_BOSSES } from '../data/bosses';
 import { Boss, BossPrediction, BossReport, GameServer } from '../../types';
 import { useSettings } from '../contexts/SettingsContext';
@@ -11,9 +11,9 @@ import { useInterval } from '../hooks/useInterval';
 import { formatDuration, formatTime, formatRelativeTime, Timezone, getTimezoneLabel } from '../utils/time';
 import { useBossReports } from '../hooks/useBossReports';
 import { useBossFavorites } from '../hooks/useBossFavorites';
-import Modal from '../../components/Modal';
-import Button from '../../components/Button';
-import Card from '../../components/Card';
+import Modal from '../components/Modal';
+import Button from '../components/Button';
+import Card from '../components/Card';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import {
   buildOverlayUrl,
@@ -34,6 +34,18 @@ type BossTimerNotificationSettings = {
   minutesBefore: number[];
   volume: number;
 };
+
+type BossVoteKind = 'up' | 'down';
+
+type BossVoteState = Record<
+  string, // key: `${bossId}:${serverId}`
+  {
+    reportId: string;
+    vote: BossVoteKind;
+  }
+>;
+
+const BOSS_VOTE_STORAGE_KEY = 'lordnine-tools/bossReportVotes';
 
 const ALERT_MINUTE_OPTIONS = [1, 3, 5, 10, 15, 30];
 
@@ -406,10 +418,10 @@ const ViewReportsModal: React.FC<{
   reports: BossReport[];
   isOpen: boolean;
   onClose: () => void;
-  onUpvote: (id: string) => void;
-  onDownvote: (id: string) => void;
+  onVote: (reportId: string, vote: BossVoteKind) => void;
+  currentVote: { reportId: string; vote: BossVoteKind } | null;
   use24h: boolean;
-}> = ({ boss, reports, isOpen, onClose, onUpvote, onDownvote, use24h }) => {
+}> = ({ boss, reports, isOpen, onClose, onVote, currentVote, use24h }) => {
   if (!isOpen || !boss) return null;
 
   return (
@@ -419,53 +431,67 @@ const ViewReportsModal: React.FC<{
       title={`Recent Reports - ${boss.name}`}
     >
       <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-        {reports.slice(0, 10).map((report) => (
-          <div
-            key={report.id}
-            className="bg-gray-700/50 p-3 rounded-lg flex justify-between items-center"
-          >
-            <div>
-              <p className="font-semibold">
-                {formatTime(new Date(report.eventTime), use24h)} -{' '}
-                <span className="text-sm text-gray-400">
-                  {new Date(report.eventTime).toLocaleDateString()}
+        {reports.slice(0, 10).map((report) => {
+          const isLocked = !!currentVote; // any vote for this boss = lock all buttons
+          const isUpActive =
+            !!currentVote &&
+            currentVote.reportId === report.id &&
+            currentVote.vote === 'up';
+          const isDownActive =
+            !!currentVote &&
+            currentVote.reportId === report.id &&
+            currentVote.vote === 'down';
+
+          return (
+            <div
+              key={report.id}
+              className="bg-gray-700/50 p-3 rounded-lg flex justify-between items-center"
+            >
+              <div>
+                <p className="font-semibold">
+                  {formatTime(new Date(report.eventTime), use24h)} -{' '}
+                  <span className="text-sm text-gray-400">
+                    {new Date(report.eventTime).toLocaleDateString()}
+                  </span>
+                </p>
+                <p className="text-xs text-gray-500">
+                  Reported {formatRelativeTime(new Date(report.createdAt))}
+                </p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-gray-300">
+                  <span className="text-green-400">
+                    +{report.upvotes}
+                  </span>{' '}
+                  /{' '}
+                  <span className="text-red-400">
+                    -{report.downvotes}
+                  </span>
                 </span>
-              </p>
-              <p className="text-xs text-gray-500">
-                Reported {formatRelativeTime(new Date(report.createdAt))}
-              </p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <span className="text-sm text-gray-300">
-                <span className="text-green-400">
-                  +{report.upvotes}
-                </span>{' '}
-                /{' '}
-                <span className="text-red-400">
-                  -{report.downvotes}
-                </span>
-              </span>
-              <div className="flex space-x-1">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => onUpvote(report.id)}
-                  aria-label="Upvote"
-                >
-                  👍
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => onDownvote(report.id)}
-                  aria-label="Downvote"
-                >
-                  👎
-                </Button>
+                <div className="flex space-x-1">
+                  <Button
+                    size="sm"
+                    variant={isUpActive ? 'primary' : 'secondary'}
+                    disabled={isLocked}
+                    onClick={() => onVote(report.id, 'up')}
+                    aria-label="Upvote"
+                  >
+                    {isUpActive ? '👍 Voted' : '👍'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={isDownActive ? 'danger' : 'secondary'}
+                    disabled={isLocked}
+                    onClick={() => onVote(report.id, 'down')}
+                    aria-label="Downvote"
+                  >
+                    {isDownActive ? '👎 Voted' : '👎'}
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Modal>
   );
@@ -501,6 +527,37 @@ const BossTimer: React.FC = () => {
       serverId: settings.selectedServerId || settings.myServerId || SEA_SERVERS[0].id,
     });
   const [overlayCopied, setOverlayCopied] = useState(false);
+  const [bossVotes, setBossVotes] =
+    useLocalStorage<BossVoteState>(BOSS_VOTE_STORAGE_KEY, {});
+
+  const getCurrentVoteForBoss = (bossId: string, serverId: string) =>
+    bossVotes[`${bossId}:${serverId}`] || null;
+
+  const handleVote = (boss: Boss, reportId: string, vote: BossVoteKind) => {
+    const key = `${boss.id}:${selectedServer.id}`;
+    const existing = bossVotes[key];
+
+    // Already voted for this boss on this server from this browser
+    if (existing) {
+      alert(
+        'You already rated a report for this boss on this server from this browser. You cannot rate it again.'
+      );
+      return;
+    }
+
+    // First (and only) vote for this boss/server on this browser
+    const next: BossVoteState = {
+      ...bossVotes,
+      [key]: { reportId, vote },
+    };
+    setBossVotes(next);
+
+    if (vote === 'up') {
+      upvote(reportId);
+    } else {
+      downvote(reportId);
+    }
+  };
 
   useInterval(() => setNow(new Date()), 1000);
 
@@ -1243,8 +1300,18 @@ const BossTimer: React.FC = () => {
         onClose={() =>
           setViewReportsModalState({ isOpen: false, boss: null })
         }
-        onUpvote={upvote}
-        onDownvote={downvote}
+        onVote={(reportId, vote) => {
+          if (!viewReportsModalState.boss) return;
+          handleVote(viewReportsModalState.boss, reportId, vote);
+        }}
+        currentVote={
+          viewReportsModalState.boss
+            ? getCurrentVoteForBoss(
+              viewReportsModalState.boss.id,
+              selectedServer.id
+            )
+            : null
+        }
         use24h={settings.use24h}
       />
     </div>

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import PageHeader from '../../components/PageHeader';
-import Card from '../../components/Card';
+import PageHeader from '../components/PageHeader';
+import Card from '../components/Card';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { ChecklistState, ChecklistTask } from '../../types';
 import { checklistTasks } from '../data/checklist';

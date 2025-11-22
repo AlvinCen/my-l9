@@ -51,12 +51,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-10">
-      {/* Hero Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-        <p className="mt-2 text-gray-400">Your daily overview of Lordnine activities.</p>
-      </div>
-
       {/* Main Content: Next Boss */}
       <div className="grid grid-cols-1 gap-6">
         {/* Next Boss Card */}

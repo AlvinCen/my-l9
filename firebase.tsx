@@ -11,7 +11,6 @@ const firebaseConfig = {
     measurementId: "G-QE37LNF692",
 };
 
-setLogLevel("debug");
 
 const app = initializeApp(firebaseConfig);
 

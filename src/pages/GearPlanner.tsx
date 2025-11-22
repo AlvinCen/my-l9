@@ -1,6 +1,6 @@
 import React from 'react';
-import ComingSoon from '../../components/ComingSoon';
-import PageHeader from '../../components/PageHeader';
+import ComingSoon from '../components/ComingSoon';
+import PageHeader from '../components/PageHeader';
 
 const GearPlanner: React.FC = () => {
   return (
