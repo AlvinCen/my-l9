@@ -1,15 +1,15 @@
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { SettingsProvider } from './contexts/SettingsContext';
+import { SettingsProvider } from './src/contexts/SettingsContext';
 
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import BossTimer from './pages/BossTimer';
-import BossTimerOverlay from './pages/BossTimerOverlay';
-import ClassTagPlanner from './pages/ClassTagPlanner';
-import GearPlanner from './pages/GearPlanner';
-import Codes from './pages/Codes';
-import Settings from './pages/Settings';
+import Dashboard from './src/pages/Dashboard';
+import BossTimer from './src/pages/BossTimer';
+import BossTimerOverlay from './src/pages/BossTimerOverlay';
+import ClassTagPlanner from './src/pages/ClassTagPlanner';
+import GearPlanner from './src/pages/GearPlanner';
+import Codes from './src/pages/Codes';
+import Settings from './src/pages/Settings';
 
 const App: React.FC = () => {
   return (

@@ -1,8 +1,6 @@
 
 export type CodeStatus = 'AVAILABLE' | 'EXPIRED';
 
-export type Region = 'SEA' | 'GLOBAL' | 'KR' | 'JP' | 'OTHER';
-
 export interface RewardItem {
   id: string;        // internal id
   name: string;      // e.g. "Cron Stone"
@@ -14,7 +12,7 @@ export interface GameCode {
   code: string;          // the redeem code string
   title: string;         // short label for the code
   description?: string;  // optional
-  region: Region;
+  region: 'SEA' | 'GLOBAL' | 'KR' | 'JP' | 'OTHER';
   status: CodeStatus;
   availableSince?: string; // ISO date
   expiresAt?: string;      // ISO date
@@ -24,7 +22,7 @@ export interface GameCode {
 export interface CodeSuggestion {
   id: string;
   code: string;
-  region: Region;
+  region: 'SEA' | 'GLOBAL' | 'KR' | 'JP' | 'OTHER';
   rewardsText: string; // free-text description of rewards
   sourceUrl?: string;
   note?: string;

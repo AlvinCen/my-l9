@@ -9,6 +9,7 @@ import { SEA_SERVERS } from '../data/servers';
 import { useBossReports } from '../hooks/useBossReports';
 import { useSettings } from '../contexts/SettingsContext';
 import { Boss, BossPrediction, GameServer } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 // The visual component, exported for use in Settings preview
 export const OverlayCard: React.FC<{
@@ -57,14 +58,15 @@ const BossTimerOverlay: React.FC = () => {
   const location = useLocation();
   const { settings } = useSettings();
   const { reports } = useBossReports();
+  const navigate = useNavigate();
 
-  const { serverId, showRegion, lang, overlayId } = useMemo(() => {
+
+  const { serverId, showRegion, lang } = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return {
-      serverId: params.get('serverId') || settings.selectedServerId || SEA_SERVERS[0].id,
+      serverId: params.get('serverId') || settings.selectedServerId || settings.myServerId || SEA_SERVERS[0].id,
       showRegion: params.get('showRegion') !== '0', // default to true
       lang: params.get('lang') || 'en',
-      overlayId: params.get('overlayId') || null, // Read the overlayId, can be used later
     };
   }, [location.search, settings.selectedServerId]);
 
@@ -77,7 +79,8 @@ const BossTimerOverlay: React.FC = () => {
     () => selectedServer ? getLastMaintenance(selectedServer.region) : undefined,
     [selectedServer]
   );
-  
+
+
   const [now, setNow] = useState(() => new Date());
   useInterval(() => setNow(new Date()), 1000);
 
@@ -88,7 +91,17 @@ const BossTimerOverlay: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-transparent text-slate-50 flex items-center justify-center p-4 font-sans">
-      <OverlayCard 
+      {/* Back button */}
+      <button
+        type="button"
+        onClick={() => navigate('/boss-timer')}
+        className="absolute top-4 left-4 z-10 px-3 py-1 rounded-md text-xs font-semibold
+                   bg-slate-800/80 border border-slate-600 hover:bg-slate-700
+                   shadow-sm shadow-slate-900/50"
+      >
+        ← Back
+      </button>
+      <OverlayCard
         server={selectedServer}
         prediction={nextBossInfo}
         now={now}

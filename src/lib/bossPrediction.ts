@@ -4,11 +4,11 @@ import { Boss, GameServer, MaintenanceInfo, BossPrediction, BossSchedule, BossRe
 const SERVER_TIMEZONE_OFFSET_MINUTES = 7 * 60;
 
 function applyTimezoneOffset(date: Date, offsetMinutes: number): Date {
-    return new Date(date.getTime() + offsetMinutes * 60 * 1000);
+  return new Date(date.getTime() + offsetMinutes * 60 * 1000);
 }
 
 function removeTimezoneOffset(date: Date, offsetMinutes: number): Date {
-    return new Date(date.getTime() - offsetMinutes * 60 * 1000);
+  return new Date(date.getTime() - offsetMinutes * 60 * 1000);
 }
 
 /**
@@ -30,7 +30,7 @@ export function computeNextSpawnForFixedSchedule(options: {
   boss.schedules.forEach(schedule => {
     const [hour, minute] = schedule.time.split(':').map(Number);
     const currentDayInServerTz = nowInServerTz.getUTCDay();
-    
+
     // Calculate days until next scheduled day
     let dayDiff = schedule.dayOfWeek - currentDayInServerTz;
     if (dayDiff < 0) {
@@ -86,20 +86,20 @@ export function computeNextSpawnForCooldown(options: {
 
   // If we are before or at the first maintenance, the first spawn is simply maintenance + cooldown
   if (now.getTime() <= maintenanceTime.getTime()) {
-      const nextSpawn = new Date(maintenanceTime.getTime() + cooldownMs);
-      return {
-          bossId: boss.id,
-          serverId: server.id,
-          source: 'MAINTENANCE_BASED',
-          nextSpawn,
-          cooldownHours: cooldown,
-      };
+    const nextSpawn = new Date(maintenanceTime.getTime() + cooldownMs);
+    return {
+      bossId: boss.id,
+      serverId: server.id,
+      source: 'MAINTENANCE_BASED',
+      nextSpawn,
+      cooldownHours: cooldown,
+    };
   }
 
   const diffMs = now.getTime() - maintenanceTime.getTime();
   const cycles = Math.floor(diffMs / cooldownMs);
   const nextSpawn = new Date(maintenanceTime.getTime() + (cycles + 1) * cooldownMs);
-  
+
   return {
     bossId: boss.id,
     serverId: server.id,
@@ -124,28 +124,28 @@ export function computeNextSpawnForCommunityReport(options: {
   if (boss.spawnMode !== 'COOLDOWN' || !cooldown || reports.length === 0) {
     return null;
   }
-  
+
   // Find the most reliable report (most recent with positive score)
   const sortedReports = reports
-      .filter(r => r.bossId === boss.id && r.serverId === server.id && r.upvotes > r.downvotes)
-      .sort((a, b) => new Date(b.eventTime).getTime() - new Date(a.eventTime).getTime());
-  
+    .filter(r => r.bossId === boss.id && r.serverId === server.id && r.upvotes > r.downvotes)
+    .sort((a, b) => new Date(b.eventTime).getTime() - new Date(a.eventTime).getTime());
+
   const lastValidReport = sortedReports[0];
 
   if (!lastValidReport) {
-      return null;
+    return null;
   }
 
   const lastKillTime = new Date(lastValidReport.eventTime);
   const cooldownMs = cooldown * 60 * 60 * 1000;
-  
+
   let nextSpawn = new Date(lastKillTime.getTime() + cooldownMs);
 
   // If that spawn time is in the past, calculate the next one from there
   if (nextSpawn.getTime() < now.getTime()) {
-      const diffMs = now.getTime() - lastKillTime.getTime();
-      const cycles = Math.floor(diffMs / cooldownMs);
-      nextSpawn = new Date(lastKillTime.getTime() + (cycles + 1) * cooldownMs);
+    const diffMs = now.getTime() - lastKillTime.getTime();
+    const cycles = Math.floor(diffMs / cooldownMs);
+    nextSpawn = new Date(lastKillTime.getTime() + (cycles + 1) * cooldownMs);
   }
 
   return {
@@ -182,7 +182,7 @@ export function getBossPrediction(options: {
     }
     // Fallback to maintenance
     if (maintenance) {
-        return computeNextSpawnForCooldown({ boss, server, now, maintenance });
+      return computeNextSpawnForCooldown({ boss, server, now, maintenance });
     }
   }
 
@@ -194,23 +194,48 @@ export function getBossPrediction(options: {
  * Helper to find the single next boss prediction from a list of bosses.
  */
 export function getOverallNextBossPrediction(
-    bosses: Boss[], 
-    server: GameServer, 
-    now: Date, 
-    maintenance: MaintenanceInfo | undefined,
-    reports: BossReport[]
+  bosses: Boss[],
+  server: GameServer,
+  now: Date,
+  maintenance: MaintenanceInfo | undefined,
+  reports: BossReport[]
 ): { boss: Boss, prediction: BossPrediction } | null {
-    
-    const allPredictions = bosses
-        .map(boss => {
-            const prediction = getBossPrediction({ boss, server, now, maintenance, reports });
-            return prediction ? { boss, prediction } : null;
-        })
-        .filter((p): p is { boss: Boss, prediction: BossPrediction } => p !== null && p.prediction.nextSpawn >= now);
 
-    if (allPredictions.length === 0) return null;
+  const allPredictions = bosses
+    .map(boss => {
+      const prediction = getBossPrediction({ boss, server, now, maintenance, reports });
+      return prediction ? { boss, prediction } : null;
+    })
+    .filter((p): p is { boss: Boss, prediction: BossPrediction } => p !== null && p.prediction.nextSpawn >= now);
 
-    allPredictions.sort((a, b) => a.prediction.nextSpawn.getTime() - b.prediction.nextSpawn.getTime());
-    
-    return allPredictions[0];
+  if (allPredictions.length === 0) return null;
+
+  allPredictions.sort((a, b) => a.prediction.nextSpawn.getTime() - b.prediction.nextSpawn.getTime());
+
+  return allPredictions[0];
+}
+
+/**
+ * Helper to get a list of upcoming boss predictions, sorted by time.
+ */
+export function getUpcomingBosses(
+  bosses: Boss[],
+  server: GameServer,
+  now: Date,
+  maintenance: MaintenanceInfo | undefined,
+  reports: BossReport[]
+): { boss: Boss, prediction: BossPrediction }[] {
+
+  const allPredictions = bosses
+    .map(boss => {
+      const prediction = getBossPrediction({ boss, server, now, maintenance, reports });
+      return prediction ? { boss, prediction } : null;
+    })
+    .filter((p): p is { boss: Boss, prediction: BossPrediction } => p !== null && p.prediction.nextSpawn >= now);
+
+  if (allPredictions.length === 0) return [];
+
+  allPredictions.sort((a, b) => a.prediction.nextSpawn.getTime() - b.prediction.nextSpawn.getTime());
+
+  return allPredictions;
 }

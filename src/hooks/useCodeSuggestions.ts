@@ -1,27 +1,43 @@
-
-import { useLocalStorage } from './useLocalStorage';
+import { useState, useEffect } from 'react';
+import { collection, query, onSnapshot, addDoc, deleteDoc, doc, orderBy } from 'firebase/firestore';
+import { db } from '@/firebase';
 import { CodeSuggestion } from '../data/codes';
-import { generateUUID } from '../utils/helpers';
 
 export function useCodeSuggestions() {
-  const [suggestions, setSuggestions] = useLocalStorage<CodeSuggestion[]>('ln_code_suggestions', []);
+  const [suggestions, setSuggestions] = useState<CodeSuggestion[]>([]);
 
-  const addSuggestion = (data: Omit<CodeSuggestion, 'id' | 'createdAt'>) => {
-    const newSuggestion: CodeSuggestion = {
-      id: generateUUID(),
-      createdAt: new Date().toISOString(),
-      ...data,
-    };
-    setSuggestions(prev => [newSuggestion, ...prev]);
+  useEffect(() => {
+    const q = query(collection(db, 'code_suggestions'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loaded = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as CodeSuggestion[];
+      setSuggestions(loaded);
+    }, (error) => {
+      console.error("Error fetching code suggestions:", error);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const addSuggestion = async (data: Omit<CodeSuggestion, 'id' | 'createdAt'>) => {
+    try {
+      await addDoc(collection(db, 'code_suggestions'), {
+        ...data,
+        createdAt: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("Error adding suggestion:", e);
+    }
   };
 
-  const deleteSuggestion = (id: string) => {
-    setSuggestions(prev => prev.filter(s => s.id !== id));
+  const deleteSuggestion = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'code_suggestions', id));
+    } catch (e) {
+      console.error("Error deleting suggestion:", e);
+    }
   };
 
-  const clearSuggestions = () => {
-    setSuggestions([]);
-  };
-
-  return { suggestions, addSuggestion, deleteSuggestion, clearSuggestions };
+  return { suggestions, addSuggestion, deleteSuggestion };
 }
