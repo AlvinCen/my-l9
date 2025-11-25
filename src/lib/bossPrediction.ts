@@ -97,8 +97,19 @@ export function computeNextSpawnForCooldown(options: {
   }
 
   const diffMs = now.getTime() - maintenanceTime.getTime();
+
+  // Calculate which spawn cycle we're currently in
+  // Example: maintenance at 00:00, cooldown 2hrs
+  // - At 01:00: cycles=0, waiting for spawn 1 at 02:00
+  // - At 02:30: cycles=1, spawn 1 happened at 02:00 (SPAWNING)
+  // - At 03:30: cycles=1, still spawn 1 period
+  // - At 04:30: cycles=2, spawn 2 happened at 04:00 (SPAWNING)
   const cycles = Math.floor(diffMs / cooldownMs);
-  const nextSpawn = new Date(maintenanceTime.getTime() + (cycles + 1) * cooldownMs);
+
+  // Return the spawn we're currently on or waiting for
+  // If cycles=0, return first spawn (maintenance + cooldown)
+  // If cycles>0, return that cycle's spawn which may be in the past
+  const nextSpawn = new Date(maintenanceTime.getTime() + Math.max(1, cycles) * cooldownMs);
 
   return {
     bossId: boss.id,
@@ -138,15 +149,20 @@ export function computeNextSpawnForCommunityReport(options: {
 
   const lastKillTime = new Date(lastValidReport.eventTime);
   const cooldownMs = cooldown * 60 * 60 * 1000;
+  const diffMs = now.getTime() - lastKillTime.getTime();
 
-  let nextSpawn = new Date(lastKillTime.getTime() + cooldownMs);
+  // Calculate which spawn cycle we're currently in
+  // Example: kill at 00:00, cooldown 2hrs
+  // - At 01:00: cycles=0, waiting for spawn 1 at 02:00
+  // - At 02:30: cycles=1, spawn 1 happened at 02:00 (SPAWNING)
+  // - At 03:30: cycles=1, still spawn 1 period
+  // - At 04:30: cycles=2, spawn 2 happened at 04:00 (SPAWNING)
+  const cycles = Math.floor(diffMs / cooldownMs);
 
-  // If that spawn time is in the past, calculate the next one from there
-  if (nextSpawn.getTime() < now.getTime()) {
-    const diffMs = now.getTime() - lastKillTime.getTime();
-    const cycles = Math.floor(diffMs / cooldownMs);
-    nextSpawn = new Date(lastKillTime.getTime() + (cycles + 1) * cooldownMs);
-  }
+  // Return the spawn we're currently on or waiting for
+  // If cycles=0, return first spawn (kill + cooldown)
+  // If cycles>0, return that cycle's spawn which may be in the past
+  const nextSpawn = new Date(lastKillTime.getTime() + Math.max(1, cycles) * cooldownMs);
 
   return {
     bossId: boss.id,

@@ -7,6 +7,7 @@ import { getOverallNextBossPrediction, getUpcomingBosses } from '../lib/bossPred
 import { SEA_SERVERS } from '../data/servers';
 import { getLastMaintenance } from '../data/maintenance';
 import { useBossReports } from '../hooks/useBossReports';
+import AdSense from '../components/AdSense';
 
 // --- Helper Components & Icons ---
 
@@ -96,6 +97,14 @@ const Dashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Horizontal Ad Banner */}
+      <AdSense
+        adSlot="3833545017"
+        adFormat="auto"
+        fullWidthResponsive={true}
+        style={{ display: 'block', minHeight: '90px', maxHeight: '250px' }}
+      />
 
       {/* Quick Links */}
       <div>
