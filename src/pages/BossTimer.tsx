@@ -4,7 +4,7 @@ import { BOSSES, WORLD_BOSSES, FIELD_BOSSES } from '../data/bosses';
 import { Boss, BossPrediction, BossReport, GameServer } from '../../types';
 import { useSettings } from '../contexts/SettingsContext';
 import { SEA_SERVERS } from '../data/servers';
-import { getLastMaintenance } from '../data/maintenance';
+import { useMaintenance } from '../hooks/useMaintenance';
 import { getBossPrediction, getOverallNextBossPrediction } from '../lib/bossPrediction';
 import { useInterval } from '../hooks/useInterval';
 import { formatDuration, formatTime, formatRelativeTime, Timezone, getTimezoneLabel } from '../utils/time';
@@ -620,6 +620,7 @@ const BossTimer: React.FC = () => {
   const { reports, getReportsFor, addReport, upvote, downvote } =
     useBossReports();
   const { favorites, isFavorite, toggleFavorite } = useBossFavorites();
+  const { maintenanceRecords } = useMaintenance();
   const [reportModalState, setReportModalState] = useState<{
     isOpen: boolean;
     boss: Boss | null;
@@ -683,10 +684,15 @@ const BossTimer: React.FC = () => {
     [resolvedServerId]
   );
 
-  const maintenance = useMemo(
-    () => getLastMaintenance(selectedServer.region),
-    [selectedServer.region]
-  );
+  const maintenance = useMemo(() => {
+    const regionMaintenance = maintenanceRecords
+      .filter(m => m.region === selectedServer.region)
+      .sort((a, b) => new Date(b.lastCompletedAt).getTime() - new Date(a.lastCompletedAt).getTime());
+    return regionMaintenance[0] ? {
+      region: regionMaintenance[0].region,
+      lastCompletedAt: regionMaintenance[0].lastCompletedAt
+    } : undefined;
+  }, [maintenanceRecords, selectedServer.region]);
 
   const overlayPath = useMemo(
     () => buildOverlayUrl(overlaySettings),
@@ -725,13 +731,16 @@ const BossTimer: React.FC = () => {
     [overlaySettings.serverId]
   );
 
-  const overlayPreviewMaintenance = useMemo(
-    () =>
-      overlayPreviewServer
-        ? getLastMaintenance(overlayPreviewServer.region)
-        : undefined,
-    [overlayPreviewServer]
-  );
+  const overlayPreviewMaintenance = useMemo(() => {
+    if (!overlayPreviewServer) return undefined;
+    const regionMaintenance = maintenanceRecords
+      .filter(m => m.region === overlayPreviewServer.region)
+      .sort((a, b) => new Date(b.lastCompletedAt).getTime() - new Date(a.lastCompletedAt).getTime());
+    return regionMaintenance[0] ? {
+      region: regionMaintenance[0].region,
+      lastCompletedAt: regionMaintenance[0].lastCompletedAt
+    } : undefined;
+  }, [maintenanceRecords, overlayPreviewServer]);
 
   const overlayPreviewNextBoss = useMemo(() => {
     if (!overlayPreviewServer || !overlayPreviewMaintenance) return null;
@@ -882,7 +891,8 @@ const BossTimer: React.FC = () => {
       predictions = predictions.filter(({ prediction }) => {
         if (!prediction) return false;
         const diff = prediction.nextSpawn.getTime() - now.getTime();
-        return diff >= 0 && diff <= sixHoursInMs;
+        // Include spawning bosses (diff < 0) and upcoming within 6 hours
+        return diff <= sixHoursInMs;
       });
     }
 
@@ -952,7 +962,7 @@ const BossTimer: React.FC = () => {
 
   return (
     <>
-      <div className="space-y-8">
+      <div>
         <PageHeader
           title="World Boss Timer"
           description="Track world bosses on your server."
@@ -969,7 +979,7 @@ const BossTimer: React.FC = () => {
         </PageHeader>
 
         {/* Server selector */}
-        <div className="bg-gray-800/50 border border-gray-700/60 rounded-xl p-4">
+        <div className="bg-gray-800/50 border border-gray-700/60 rounded-xl p-4 mb-4">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-primary-400 mb-3">
             Southeast Asia Server
           </h3>
@@ -1008,11 +1018,12 @@ const BossTimer: React.FC = () => {
           adSlot="3833545017"
           adFormat="auto"
           fullWidthResponsive={true}
-          style={{ display: 'block', minHeight: '90px', maxHeight: '250px' }}
+          style={{ display: 'block' }}
+          className="my-4"
         />
 
         {/* Stream Overlay settings */}
-        <Card title="Stream Overlay" className="mt-2">
+        <Card title="Stream Overlay" className="mb-8">
           <p className="text-gray-400 mb-6 max-w-2xl">
             Add the Lordnine boss timer to your stream! Configure the settings
             below, copy the URL, and add it as a Browser Source in OBS or your
@@ -1162,7 +1173,7 @@ const BossTimer: React.FC = () => {
         {nextOverallPrediction && nextOverallPrediction.prediction.nextSpawn >= now && (
           <div
             ref={nextBossCardRef}
-            className="bg-gray-800/50 border border-primary-500/30 rounded-xl p-6 shadow-lg shadow-primary-500/5"
+            className="bg-gray-800/50 border border-primary-500/30 rounded-xl p-6 shadow-lg shadow-primary-500/5 mb-8"
           >
             <p className="text-sm font-semibold uppercase tracking-wider text-primary-400 mb-2">
               Next Boss: {nextOverallPrediction.boss.name}
@@ -1268,7 +1279,7 @@ const BossTimer: React.FC = () => {
         })()}
 
         {/* Search + filters */}
-        <Card>
+        <Card className="mb-8">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             <input
               type="text"
@@ -1291,7 +1302,7 @@ const BossTimer: React.FC = () => {
           </div>
         </Card>
 
-        <div className="border-b border-gray-700">
+        <div className="border-b border-gray-700 mb-8">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             {(['ALL', 'FIELD', 'DESTROYER', 'FAVORITES'] as BossFilter[]).map(
               (tab) => (
@@ -1310,14 +1321,14 @@ const BossTimer: React.FC = () => {
           </nav>
         </div>
 
-        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs text-gray-400 uppercase font-bold tracking-wider">
+        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs text-gray-400 uppercase font-bold tracking-wider mb-8">
           <div className="col-span-3">Boss Info</div>
           <div className="col-span-2">Spawn Basis</div>
           <div className="col-span-2">Region</div>
           <div className="col-span-3">Next Spawn &amp; Status</div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 mb-8">
           {displayedBosses.length > 0 ? (
             displayedBosses.map(({ boss, prediction }) => {
               const status = getStatus(
@@ -1545,6 +1556,36 @@ const BossTimer: React.FC = () => {
         getVoteForReport={getCurrentVoteForReport}
         use24h={settings.use24h}
       />
+      {/* How to Use Guide */}
+      <div className="mt-12 bg-gray-800/30 border border-gray-700/50 rounded-xl p-8">
+        <h2 className="text-2xl font-bold text-white mb-6">How to Use the Boss Timer</h2>
+        <div className="space-y-6 text-gray-300">
+          <div>
+            <h3 className="text-lg font-semibold text-primary-400 mb-2">Understanding Timers</h3>
+            <p>
+              The timers above show the predicted spawn time for each boss.
+              <span className="text-emerald-400 font-semibold"> Green</span> timers indicate a confirmed community report.
+              <span className="text-amber-400 font-semibold"> Orange</span> timers are estimated based on server maintenance.
+              <span className="text-sky-400 font-semibold"> Blue</span> timers follow a fixed daily schedule.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-primary-400 mb-2">Reporting Kills</h3>
+            <p>
+              Help your server by reporting boss kills! Click the "Report" button on any boss card to submit a kill time.
+              Accurate reports help everyone track the next spawn window. You can also vote on existing reports to verify their accuracy.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-primary-400 mb-2">Notifications</h3>
+            <p>
+              Enable notifications to get audio alerts before a boss spawns.
+              You can customize the alert volume and how many minutes in advance you want to be notified.
+              Make sure to keep this tab open to hear the alerts.
+            </p>
+          </div>
+        </div>
+      </div>
     </>
   );
 };

@@ -1,13 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { BOSSES } from '../data/bosses';
 import { formatDuration, formatTime, Timezone, getTimezoneLabel } from '../utils/time';
 import { useSettings } from '../contexts/SettingsContext';
 import { getOverallNextBossPrediction, getUpcomingBosses } from '../lib/bossPrediction';
 import { SEA_SERVERS } from '../data/servers';
-import { getLastMaintenance } from '../data/maintenance';
 import { useBossReports } from '../hooks/useBossReports';
+import { useMaintenance } from '../hooks/useMaintenance';
+import { useInterval } from '../hooks/useInterval';
 import AdSense from '../components/AdSense';
+import { GameServer } from '../types';
 
 // --- Helper Components & Icons ---
 
@@ -27,12 +29,11 @@ const FeatureCard: React.FC<{ to: string, icon: React.ReactNode, title: string, 
 );
 
 
-import { useInterval } from '../hooks/useInterval';
-
 const Dashboard: React.FC = () => {
   const { settings } = useSettings();
   const { reports } = useBossReports();
-  const [now, setNow] = React.useState(() => new Date());
+  const { maintenanceRecords } = useMaintenance();
+  const [now, setNow] = useState(() => new Date());
 
   useInterval(() => setNow(new Date()), 1000);
 
@@ -41,7 +42,16 @@ const Dashboard: React.FC = () => {
     return SEA_SERVERS.find(s => s.id === resolvedServerId) || SEA_SERVERS[0];
   }, [settings.selectedServerId, settings.myServerId]);
 
-  const maintenance = useMemo(() => getLastMaintenance(selectedServer.region), [selectedServer.region]);
+  // Get the latest maintenance record for the selected region
+  const maintenance = useMemo(() => {
+    const regionMaintenance = maintenanceRecords
+      .filter(m => m.region === selectedServer.region)
+      .sort((a, b) => new Date(b.lastCompletedAt).getTime() - new Date(a.lastCompletedAt).getTime());
+    return regionMaintenance[0] ? {
+      region: regionMaintenance[0].region,
+      lastCompletedAt: regionMaintenance[0].lastCompletedAt
+    } : undefined;
+  }, [maintenanceRecords, selectedServer.region]);
 
   const upcomingBosses = useMemo(() => {
     return getUpcomingBosses(BOSSES, selectedServer, now, maintenance, reports);
@@ -51,7 +61,7 @@ const Dashboard: React.FC = () => {
   const secondBossInfo = upcomingBosses[1];
 
   return (
-    <div className="space-y-10">
+    <div>
       {/* Main Content: Next Boss */}
       <div className="grid grid-cols-1 gap-6">
         {/* Next Boss Card */}
@@ -98,21 +108,32 @@ const Dashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Horizontal Ad Banner */}
       <AdSense
         adSlot="3833545017"
         adFormat="auto"
         fullWidthResponsive={true}
-        style={{ display: 'block', minHeight: '90px', maxHeight: '250px' }}
+        style={{ display: 'block' }}
+        className="my-4"
       />
+
+      {/* Welcome Section */}
+      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8">
+        <h2 className="text-2xl font-bold text-white mb-4">Welcome to Lordnine Tools</h2>
+        <p className="text-gray-300 mb-4">
+          Maximize your efficiency in Lordnine with our comprehensive utility suite.
+          Track world boss spawn times, coordinate with your server, and never miss a loot drop again.
+        </p>
+        <p className="text-gray-300">
+          Our <strong>Boss Timer</strong> automatically adjusts to your local timezone and server maintenance schedule, ensuring you have the most accurate spawn predictions available.
+          Join our community of players and help keep the data fresh by reporting kills and verifying spawn times.
+        </p>
+      </div>
 
       {/* Quick Links */}
       <div>
         <h2 className="text-xl font-semibold text-white mb-4">Quick Links</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <FeatureCard to="/boss-timer" icon={<ClockIcon />} title="Boss Timer" description="Track world boss schedules and stream overlay." />
-          <FeatureCard to="/builds/class-tag" icon={<UsersIcon />} title="Class Planner" description="Plan class, abilities, and tags." />
-          <FeatureCard to="/builds/gear" icon={<ShieldIcon />} title="Gear Planner" description="Build and compare equipment sets." />
           <FeatureCard to="/codes" icon={<GiftIcon />} title="Codes" description="Redeem codes and view rewards." />
         </div>
       </div>

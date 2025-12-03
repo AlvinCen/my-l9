@@ -12,7 +12,7 @@ const SidebarAd: React.FC = () => (
                 adSlot="9130683890"
                 adFormat="auto"
                 fullWidthResponsive={true}
-                style={{ display: 'block', minHeight: '600px' }}
+                style={{ display: 'block' }}
             />
         </div>
     </div>

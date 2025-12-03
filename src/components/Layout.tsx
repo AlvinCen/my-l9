@@ -3,6 +3,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import ContentWithAds from './ContentWithAds';
+import Footer from './Footer';
 
 const Layout: React.FC = () => {
   return (
@@ -13,6 +14,7 @@ const Layout: React.FC = () => {
           <Outlet />
         </ContentWithAds>
       </main>
+      <Footer />
     </div>
   );
 };

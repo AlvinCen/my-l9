@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-
-const navLinks = [
-  { name: 'Boss Timer', path: '/boss-timer' },
-  {
-    name: 'Builds', subLinks: [
-      { name: 'Class & Tag', path: '/builds/class-tag' },
-      { name: 'Gear', path: '/builds/gear' },
-    ]
-  },
-  { name: 'Codes', path: '/codes' },
-  { name: 'Settings', path: '/settings' },
-];
+import { useSettings } from '../contexts/SettingsContext';
 
 const Navbar: React.FC = () => {
+  const { settings } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+  const navLinks = [
+    { name: 'Boss Timer', path: '/boss-timer' },
+    { name: 'Codes', path: '/codes' },
+    // Admin link - only on localhost
+    ...(isLocalhost ? [{ name: 'Admin', path: '/admin' }] : []),
+    { name: 'Settings', path: '/settings' },
+  ];
 
   const activeLinkClass = 'bg-gray-800 text-white';
   const inactiveLinkClass = 'text-gray-300 hover:bg-gray-700 hover:text-white';
@@ -41,46 +41,15 @@ const Navbar: React.FC = () => {
             </Link>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                {navLinks.map((item) => {
-                  if ('subLinks' in item) {
-                    return (
-                      <div key={item.name} className="relative">
-                        <button
-                          onClick={() => setOpenDropdown(openDropdown === item.name ? null : item.name)}
-                          className={`${inactiveLinkClass} px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
-                        >
-                          {item.name}
-                          <svg className="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                        {openDropdown === item.name && (
-                          <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-gray-700 ring-1 ring-black ring-opacity-5 z-10">
-                            {item.subLinks.map(subLink => (
-                              <NavLink
-                                key={subLink.path}
-                                to={subLink.path}
-                                onClick={() => setOpenDropdown(null)}
-                                className={({ isActive }) => `${isActive ? 'bg-gray-600' : ''} block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600`}
-                              >
-                                {subLink.name}
-                              </NavLink>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  }
-                  return (
-                    <NavLink
-                      key={item.path}
-                      to={item.path!}
-                      className={({ isActive }) => `${isActive ? activeLinkClass : inactiveLinkClass} px-3 py-2 rounded-md text-sm font-medium`}
-                    >
-                      {item.name}
-                    </NavLink>
-                  );
-                })}
+                {navLinks.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path!}
+                    className={({ isActive }) => `${isActive ? activeLinkClass : inactiveLinkClass} px-3 py-2 rounded-md text-sm font-medium`}
+                  >
+                    {item.name}
+                  </NavLink>
+                ))}
               </div>
             </div>
           </div>
@@ -110,19 +79,16 @@ const Navbar: React.FC = () => {
       {isOpen && (
         <div className="md:hidden" id="mobile-menu">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {navLinks.map((item) => {
-              if ('subLinks' in item) {
-                return (
-                  <div key={item.name}>
-                    <span className="text-gray-400 block px-3 py-2 text-base font-medium">{item.name}</span>
-                    <div className="pl-4">
-                      {item.subLinks.map(subLink => renderLink(subLink))}
-                    </div>
-                  </div>
-                )
-              }
-              return renderLink(item as { name: string, path: string });
-            })}
+            {navLinks.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path!}
+                onClick={() => setIsOpen(false)}
+                className={({ isActive }) => `${isActive ? activeLinkClass : inactiveLinkClass} block px-3 py-2 rounded-md text-base font-medium`}
+              >
+                {item.name}
+              </NavLink>
+            ))}
           </div>
         </div>
       )}

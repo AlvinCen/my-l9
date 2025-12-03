@@ -4,7 +4,7 @@ import { BOSSES } from '../data/bosses';
 import { useInterval } from '../hooks/useInterval';
 import { formatDuration } from '../utils/time';
 import { getOverallNextBossPrediction } from '../lib/bossPrediction';
-import { getLastMaintenance } from '../data/maintenance';
+import { useMaintenance } from '../hooks/useMaintenance';
 import { SEA_SERVERS } from '../data/servers';
 import { useBossReports } from '../hooks/useBossReports';
 import { useSettings } from '../contexts/SettingsContext';
@@ -58,6 +58,7 @@ const BossTimerOverlay: React.FC = () => {
   const location = useLocation();
   const { settings } = useSettings();
   const { reports } = useBossReports();
+  const { maintenanceRecords } = useMaintenance();
   const navigate = useNavigate();
 
 
@@ -75,10 +76,16 @@ const BossTimerOverlay: React.FC = () => {
     [serverId]
   );
 
-  const maintenance = useMemo(
-    () => selectedServer ? getLastMaintenance(selectedServer.region) : undefined,
-    [selectedServer]
-  );
+  const maintenance = useMemo(() => {
+    if (!selectedServer) return undefined;
+    const regionMaintenance = maintenanceRecords
+      .filter(m => m.region === selectedServer.region)
+      .sort((a, b) => new Date(b.lastCompletedAt).getTime() - new Date(a.lastCompletedAt).getTime());
+    return regionMaintenance[0] ? {
+      region: regionMaintenance[0].region,
+      lastCompletedAt: regionMaintenance[0].lastCompletedAt
+    } : undefined;
+  }, [maintenanceRecords, selectedServer]);
 
 
   const [now, setNow] = useState(() => new Date());

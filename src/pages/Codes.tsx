@@ -4,11 +4,9 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import { GAME_CODES, GameCode } from '../data/codes';
 import { useCodeSuggestions } from '../hooks/useCodeSuggestions';
-import { useSettings } from "../contexts/SettingsContext";
 
 const Codes: React.FC = () => {
-    const { settings } = useSettings();
-    const { suggestions, addSuggestion, deleteSuggestion } = useCodeSuggestions();
+    const { addSuggestion } = useCodeSuggestions();
 
     // Form State
     const [formState, setFormState] = useState({
@@ -102,46 +100,6 @@ const Codes: React.FC = () => {
                     <Card title="Expired / Unavailable">
                         {renderCodeList(expiredCodes, true)}
                     </Card>
-
-                    {settings.isAdmin && (
-                        <Card title="Suggested Codes (Admin)" className="border-t-4 border-red-800">
-                            {suggestions.length === 0 ? (
-                                <p className="text-gray-500">No suggestions pending.</p>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-left text-gray-400">
-                                        <thead className="text-xs text-gray-200 uppercase bg-gray-700">
-                                            <tr>
-                                                <th className="px-4 py-2">Code</th>
-                                                <th className="px-4 py-2">Reg</th>
-                                                <th className="px-4 py-2">Rewards</th>
-                                                <th className="px-4 py-2">Note</th>
-                                                <th className="px-4 py-2">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {suggestions.map(s => (
-                                                <tr key={s.id} className="bg-gray-800 border-b border-gray-700">
-                                                    <td className="px-4 py-2 font-mono font-bold text-white">{s.code}</td>
-                                                    <td className="px-4 py-2">{s.region}</td>
-                                                    <td className="px-4 py-2 max-w-xs truncate" title={s.rewardsText}>{s.rewardsText}</td>
-                                                    <td className="px-4 py-2 max-w-xs truncate">{s.note}</td>
-                                                    <td className="px-4 py-2">
-                                                        <button
-                                                            onClick={() => deleteSuggestion(s.id)}
-                                                            className="text-red-400 hover:text-red-300 font-bold"
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </Card>
-                    )}
                 </div>
 
                 {/* Right Column: Suggestion Form */}

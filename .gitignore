@@ -27,3 +27,6 @@ dist-ssr
 .firebase/
 firebase-debug.log
 firestore-debug.log
+
+# Admin page (sensitive)
+src/pages/Admin.tsx

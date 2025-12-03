@@ -70,6 +70,8 @@ export function computeNextSpawnForFixedSchedule(options: {
 
 /**
  * Computes the next spawn time for a boss with a cooldown, based on the last maintenance time.
+ * IMPORTANT: Maintenance completion = All bosses spawn immediately (cycle 0)
+ * Next spawns are calculated from maintenance time: maintenance + (N × cooldown)
  */
 export function computeNextSpawnForCooldown(options: {
   boss: Boss;
@@ -77,59 +79,36 @@ export function computeNextSpawnForCooldown(options: {
   now: Date;
   maintenance: MaintenanceInfo;
 }): BossPrediction | null {
-  const { boss, server, now, maintenance } = options;
+  const { boss, server, maintenance } = options;
   const cooldown = boss.cooldownHours;
   if (!cooldown) return null;
 
   const maintenanceTime = new Date(maintenance.lastCompletedAt);
-  const cooldownMs = cooldown * 60 * 60 * 1000;
 
-  // If we are before or at the first maintenance, the first spawn is simply maintenance + cooldown
-  if (now.getTime() <= maintenanceTime.getTime()) {
-    const nextSpawn = new Date(maintenanceTime.getTime() + cooldownMs);
-    return {
-      bossId: boss.id,
-      serverId: server.id,
-      source: 'MAINTENANCE_BASED',
-      nextSpawn,
-      cooldownHours: cooldown,
-    };
-  }
-
-  const diffMs = now.getTime() - maintenanceTime.getTime();
-
-  // Calculate which spawn cycle we're currently in
-  // Example: maintenance at 00:00, cooldown 2hrs
-  // - At 01:00: cycles=0, waiting for spawn 1 at 02:00
-  // - At 02:30: cycles=1, spawn 1 happened at 02:00 (SPAWNING)
-  // - At 03:30: cycles=1, still spawn 1 period
-  // - At 04:30: cycles=2, spawn 2 happened at 04:00 (SPAWNING)
-  const cycles = Math.floor(diffMs / cooldownMs);
-
-  // Return the spawn we're currently on or waiting for
-  // If cycles=0, return first spawn (maintenance + cooldown)
-  // If cycles>0, return that cycle's spawn which may be in the past
-  const nextSpawn = new Date(maintenanceTime.getTime() + Math.max(1, cycles) * cooldownMs);
-
+  // Maintenance completion = All bosses spawn immediately
+  // We simply return the maintenance time. If it's in the past, the boss is SPAWNING.
   return {
     bossId: boss.id,
     serverId: server.id,
     source: 'MAINTENANCE_BASED',
-    nextSpawn,
+    nextSpawn: maintenanceTime,
     cooldownHours: cooldown,
   };
 }
 
 /**
  * Computes the next spawn time for a boss based on community reports.
+ * Kill event = Boss was just killed, next spawn = kill time + cooldown
+ * IMPORTANT: Ignores reports older than maintenance (maintenance resets all timers)
  */
 export function computeNextSpawnForCommunityReport(options: {
   boss: Boss;
   server: GameServer;
   now: Date;
   reports: BossReport[];
+  maintenance?: MaintenanceInfo;
 }): BossPrediction | null {
-  const { boss, server, now, reports } = options;
+  const { boss, server, reports, maintenance } = options;
   const cooldown = boss.cooldownHours;
 
   if (boss.spawnMode !== 'COOLDOWN' || !cooldown || reports.length === 0) {
@@ -137,32 +116,29 @@ export function computeNextSpawnForCommunityReport(options: {
   }
 
   // Find the most reliable report (most recent with positive score)
-  const sortedReports = reports
+  let sortedReports = reports
     .filter(r => r.bossId === boss.id && r.serverId === server.id && r.upvotes > r.downvotes)
     .sort((a, b) => new Date(b.eventTime).getTime() - new Date(a.eventTime).getTime());
+
+  // CRITICAL: Filter out reports older than maintenance
+  // Maintenance resets all boss timers, so old kill reports are invalid
+  if (maintenance) {
+    const maintenanceTime = new Date(maintenance.lastCompletedAt);
+    sortedReports = sortedReports.filter(r => new Date(r.eventTime).getTime() > maintenanceTime.getTime());
+  }
 
   const lastValidReport = sortedReports[0];
 
   if (!lastValidReport) {
-    return null;
+    return null; // No valid reports after maintenance
   }
 
   const lastKillTime = new Date(lastValidReport.eventTime);
   const cooldownMs = cooldown * 60 * 60 * 1000;
-  const diffMs = now.getTime() - lastKillTime.getTime();
 
-  // Calculate which spawn cycle we're currently in
-  // Example: kill at 00:00, cooldown 2hrs
-  // - At 01:00: cycles=0, waiting for spawn 1 at 02:00
-  // - At 02:30: cycles=1, spawn 1 happened at 02:00 (SPAWNING)
-  // - At 03:30: cycles=1, still spawn 1 period
-  // - At 04:30: cycles=2, spawn 2 happened at 04:00 (SPAWNING)
-  const cycles = Math.floor(diffMs / cooldownMs);
-
-  // Return the spawn we're currently on or waiting for
-  // If cycles=0, return first spawn (kill + cooldown)
-  // If cycles>0, return that cycle's spawn which may be in the past
-  const nextSpawn = new Date(lastKillTime.getTime() + Math.max(1, cycles) * cooldownMs);
+  // Next spawn is always kill time + cooldown.
+  // We do NOT auto-advance cycles. If the time has passed, it means the boss is SPAWNING.
+  const nextSpawn = new Date(lastKillTime.getTime() + cooldownMs);
 
   return {
     bossId: boss.id,
@@ -191,8 +167,14 @@ export function getBossPrediction(options: {
   }
 
   if (boss.spawnMode === 'COOLDOWN') {
-    // Prioritize community reports
-    const communityPrediction = computeNextSpawnForCommunityReport({ boss, server, now, reports });
+    // Prioritize community reports (but only those AFTER maintenance)
+    const communityPrediction = computeNextSpawnForCommunityReport({
+      boss,
+      server,
+      now,
+      reports,
+      maintenance // Pass maintenance to filter old reports
+    });
     if (communityPrediction) {
       return communityPrediction;
     }
