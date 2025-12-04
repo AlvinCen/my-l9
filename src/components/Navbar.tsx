@@ -12,6 +12,7 @@ const Navbar: React.FC = () => {
   const navLinks = [
     { name: 'Boss Timer', path: '/boss-timer' },
     { name: 'Codes', path: '/codes' },
+    { name: 'Guides', path: '/guides' },
     // Admin link - only on localhost
     ...(isLocalhost ? [{ name: 'Admin', path: '/admin' }] : []),
     { name: 'Settings', path: '/settings' },

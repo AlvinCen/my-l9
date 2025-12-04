@@ -22,22 +22,29 @@ const AdSense: React.FC<AdSenseProps> = ({
     className = ''
 }) => {
     const adRef = useRef<HTMLModElement>(null);
-    const [isLoaded, setIsLoaded] = useState(true); // Default true untuk menghindari flash
+    const [isLoaded, setIsLoaded] = useState(true);
     const [adStatus, setAdStatus] = useState<string | null>(null);
     const [hasError, setHasError] = useState(false);
-    const isPushed = useRef(false); // Flag to prevent duplicate push
+    const isPushed = useRef(false);
 
     const isLocalhost = typeof window !== 'undefined' &&
         (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
     useEffect(() => {
-        // Prevent duplicate push
         if (isPushed.current) return;
 
         const pushAd = () => {
             try {
+                // Check if ad blocker is active (adsbygoogle might be missing)
+                if (!window.adsbygoogle) {
+                    console.warn('AdSense: window.adsbygoogle not found (AdBlocker?)');
+                    setIsLoaded(false);
+                    return;
+                }
+
                 if (adRef.current && !adRef.current.hasAttribute('data-adsbygoogle-status')) {
                     if (adRef.current.offsetParent === null || adRef.current.offsetWidth === 0) {
+                        // Element is hidden, don't push
                         setIsLoaded(false);
                         return;
                     }
@@ -45,7 +52,7 @@ const AdSense: React.FC<AdSenseProps> = ({
                     isPushed.current = true;
                     (window.adsbygoogle = window.adsbygoogle || []).push({});
 
-                    // MutationObserver to watch for status changes (e.g. 'unfilled')
+                    // MutationObserver to watch for status changes
                     const observer = new MutationObserver((mutations) => {
                         mutations.forEach((mutation) => {
                             if (mutation.type === 'attributes' && mutation.attributeName === 'data-adsbygoogle-status') {
@@ -63,20 +70,17 @@ const AdSense: React.FC<AdSenseProps> = ({
                         observer.observe(adRef.current, { attributes: true });
                     }
 
-                    isPushed.current = true;
-                    (window.adsbygoogle = window.adsbygoogle || []).push({});
-
-                    // Fallback check
+                    // Fallback check - reduced to 1s to hide faster
                     setTimeout(() => {
                         if (adRef.current) {
                             const status = adRef.current.getAttribute('data-adsbygoogle-status');
                             setAdStatus(status || null);
-                            // If still null after 2s, or unfilled, hide it
+                            // If still null after 1s, or unfilled, hide it
                             if (status === 'unfilled' || status === null) {
                                 setIsLoaded(false);
                             }
                         }
-                    }, 2000);
+                    }, 1000);
                 }
             } catch (error: any) {
                 if (error?.message?.includes('No slot size')) return;
@@ -89,27 +93,68 @@ const AdSense: React.FC<AdSenseProps> = ({
         return () => clearTimeout(timer);
     }, [adSlot]);
 
+    const [hasHeight, setHasHeight] = useState(false);
+
+    useEffect(() => {
+        if (!adRef.current) return;
+
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                if (entry.contentRect.height > 0) {
+                    setHasHeight(true);
+                } else {
+                    setHasHeight(false);
+                }
+            }
+        });
+
+        resizeObserver.observe(adRef.current);
+
+        return () => resizeObserver.disconnect();
+    }, []);
+
     if (hasError || !isLoaded) return null;
 
-    // Only apply the className (which contains margins) if the ad is successfully loaded ('done')
-    const appliedClassName = adStatus === 'done' ? className : '';
-
-    // Force hide if unfilled, even if isLoaded is still true (react render cycle delay)
-    const appliedStyle = adStatus === 'unfilled'
-        ? { ...style, display: 'none !important' }
-        : style;
+    // Show only if status is done AND it actually has significant height
+    const shouldShow = adStatus === 'done' && hasHeight;
 
     return (
-        <ins
-            ref={adRef}
-            className={`adsbygoogle ${appliedClassName}`}
-            style={appliedStyle}
-            data-ad-client="ca-pub-1323193450413502"
-            data-ad-slot={adSlot}
-            data-ad-format={adFormat}
-            data-full-width-responsive={fullWidthResponsive.toString()}
-            data-adtest={isLocalhost ? "on" : undefined}
-        />
+        <div
+            className={shouldShow ? className : ''}
+            style={shouldShow ? {
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '0px',
+                background: 'rgba(0, 0, 0, 0.2)', // Subtle background to show it exists
+                borderRadius: '8px',
+                overflow: 'hidden'
+            } : {
+                position: 'absolute',
+                width: '100%',
+                visibility: 'hidden',
+                pointerEvents: 'none',
+                opacity: 0,
+                zIndex: -1
+            }}
+        >
+            {shouldShow && (
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 mt-1">
+                    Advertisement
+                </span>
+            )}
+            <ins
+                ref={adRef}
+                className="adsbygoogle"
+                style={{ display: 'block' }}
+                data-ad-client="ca-pub-1323193450413502"
+                data-ad-slot={adSlot}
+                data-ad-format={adFormat}
+                data-full-width-responsive={fullWidthResponsive.toString()}
+                data-adtest={isLocalhost ? "on" : undefined}
+            />
+        </div>
     );
 };
 

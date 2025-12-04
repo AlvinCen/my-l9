@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import { BOSSES, WORLD_BOSSES, FIELD_BOSSES } from '../data/bosses';
 import { Boss, BossPrediction, BossReport, GameServer } from '../../types';
@@ -979,543 +980,559 @@ const BossTimer: React.FC = () => {
         </PageHeader>
 
         {/* Server selector */}
-        <div className="bg-gray-800/50 border border-gray-700/60 rounded-xl p-4 mb-4">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-primary-400 mb-3">
-            Southeast Asia Server
-          </h3>
-          {['Horatio', 'Yvonne', 'Douglas', 'Santiago'].map((group) => (
-            <div key={group}>
-              <p className="text-xs text-gray-400 font-bold mt-2 mb-1">
-                {group}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {SEA_SERVERS.filter((s) => s.group === group).map(
-                  (server) => (
-                    <button
-                      key={server.id}
-                      onClick={() => handleServerSelect(server.id)}
-                      className={`py-2 px-3 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${selectedServer.id === server.id
-                        ? 'bg-primary-600 text-white ring-2 ring-primary-400'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                    >
-                      {server.name}
-                      {settings.myServerId === server.id && (
-                        <span className="ml-1 text-xs text-primary-200">
-                          ★
-                        </span>
-                      )}
-                    </button>
-                  )
-                )}
+        <div className="flex flex-col gap-6">
+          <div className="bg-gray-800/50 border border-gray-700/60 rounded-xl p-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-primary-400 mb-3">
+              Southeast Asia Server
+            </h3>
+            {['Horatio', 'Yvonne', 'Douglas', 'Santiago'].map((group) => (
+              <div key={group}>
+                <p className="text-xs text-gray-400 font-bold mt-2 mb-1">
+                  {group}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {SEA_SERVERS.filter((s) => s.group === group).map(
+                    (server) => (
+                      <button
+                        key={server.id}
+                        onClick={() => handleServerSelect(server.id)}
+                        className={`py-2 px-3 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${selectedServer.id === server.id
+                          ? 'bg-primary-600 text-white ring-2 ring-primary-400'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          }`}
+                      >
+                        {server.name}
+                        {settings.myServerId === server.id && (
+                          <span className="ml-1 text-xs text-primary-200">
+                            ★
+                          </span>
+                        )}
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Horizontal Ad Banner */}
+          <AdSense
+            adSlot="3833545017"
+            adFormat="auto"
+            fullWidthResponsive={true}
+            style={{ display: 'block' }}
+          />
+
+          {/* Compact Summary */}
+          <div className="text-gray-300 text-sm bg-gray-800/30 border border-gray-700/50 rounded-lg p-4">
+            <p className="mb-2">
+              <strong>Welcome to the Lordnine Boss Timer.</strong> This tool tracks spawn times for all World and Field bosses in the SEA region.
+              To get started, make sure you have selected your <strong>Server</strong> above.
+            </p>
+            <p>
+              Timers are calculated based on fixed cooldowns and community reports.
+              You can <strong>pin bosses</strong> to your favorites for quick access, and enable <strong>audio notifications</strong> to get alerted before a boss spawns.
+              <span className="block mt-1 text-xs text-gray-500">
+                Need more help? <Link to="/guides/world-boss-timer" className="text-blue-400 hover:underline">Read our full guide.</Link>
+              </span>
+            </p>
+          </div>
+
+          {/* Stream Overlay settings */}
+          <Card title="Stream Overlay">
+            <p className="text-gray-400 mb-6 max-w-2xl">
+              Add the Lordnine boss timer to your stream! Configure the settings
+              below, copy the URL, and add it as a Browser Source in OBS or your
+              preferred streaming software.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <div>
+                <label
+                  htmlFor="overlayChannel"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  Channel / Username
+                </label>
+                <input
+                  type="text"
+                  id="overlayChannel"
+                  value={overlaySettings.channel}
+                  onChange={(e) =>
+                    setOverlaySettings({
+                      ...overlaySettings,
+                      channel: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="overlayServer"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  Region / Server
+                </label>
+                <select
+                  id="overlayServer"
+                  value={overlaySettings.serverId}
+                  onChange={(e) =>
+                    setOverlaySettings({
+                      ...overlaySettings,
+                      serverId: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3"
+                >
+                  {Object.entries(serverGroups).map(([group, servers]) => (
+                    <optgroup label={group} key={group}>
+                      {(servers as GameServer[]).map((server) => (
+                        <option key={server.id} value={server.id}>
+                          {server.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="overlayLanguage"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  Language
+                </label>
+                <select
+                  id="overlayLanguage"
+                  value={overlaySettings.lang}
+                  onChange={(e) =>
+                    setOverlaySettings({
+                      ...overlaySettings,
+                      lang: e.target.value as OverlaySettings['lang'],
+                    })
+                  }
+                  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3"
+                >
+                  <option value="en">English</option>
+                  <option value="id" disabled>
+                    Bahasa Indonesia (WIP)
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="overlayShowRegion"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  Show Region
+                </label>
+                <select
+                  id="overlayShowRegion"
+                  value={overlaySettings.showRegion ? '1' : '0'}
+                  onChange={(e) =>
+                    setOverlaySettings({
+                      ...overlaySettings,
+                      showRegion: e.target.value === '1',
+                    })
+                  }
+                  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3"
+                >
+                  <option value="1">Yes</option>
+                  <option value="0">No</option>
+                </select>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Horizontal Ad Banner */}
-        <AdSense
-          adSlot="3833545017"
-          adFormat="auto"
-          fullWidthResponsive={true}
-          style={{ display: 'block' }}
-          className="my-4"
-        />
-
-        {/* Stream Overlay settings */}
-        <Card title="Stream Overlay" className="mb-8">
-          <p className="text-gray-400 mb-6 max-w-2xl">
-            Add the Lordnine boss timer to your stream! Configure the settings
-            below, copy the URL, and add it as a Browser Source in OBS or your
-            preferred streaming software.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div>
               <label
-                htmlFor="overlayChannel"
+                htmlFor="overlayUrlInput"
                 className="block text-sm font-medium text-gray-300"
               >
-                Channel / Username
+                Overlay URL
               </label>
-              <input
-                type="text"
-                id="overlayChannel"
-                value={overlaySettings.channel}
-                onChange={(e) =>
-                  setOverlaySettings({
-                    ...overlaySettings,
-                    channel: e.target.value,
-                  })
-                }
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="overlayServer"
-                className="block text-sm font-medium text-gray-300"
-              >
-                Region / Server
-              </label>
-              <select
-                id="overlayServer"
-                value={overlaySettings.serverId}
-                onChange={(e) =>
-                  setOverlaySettings({
-                    ...overlaySettings,
-                    serverId: e.target.value,
-                  })
-                }
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3"
-              >
-                {Object.entries(serverGroups).map(([group, servers]) => (
-                  <optgroup label={group} key={group}>
-                    {(servers as GameServer[]).map((server) => (
-                      <option key={server.id} value={server.id}>
-                        {server.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="overlayLanguage"
-                className="block text-sm font-medium text-gray-300"
-              >
-                Language
-              </label>
-              <select
-                id="overlayLanguage"
-                value={overlaySettings.lang}
-                onChange={(e) =>
-                  setOverlaySettings({
-                    ...overlaySettings,
-                    lang: e.target.value as OverlaySettings['lang'],
-                  })
-                }
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3"
-              >
-                <option value="en">English</option>
-                <option value="id" disabled>
-                  Bahasa Indonesia (WIP)
-                </option>
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="overlayShowRegion"
-                className="block text-sm font-medium text-gray-300"
-              >
-                Show Region
-              </label>
-              <select
-                id="overlayShowRegion"
-                value={overlaySettings.showRegion ? '1' : '0'}
-                onChange={(e) =>
-                  setOverlaySettings({
-                    ...overlaySettings,
-                    showRegion: e.target.value === '1',
-                  })
-                }
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3"
-              >
-                <option value="1">Yes</option>
-                <option value="0">No</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="overlayUrlInput"
-              className="block text-sm font-medium text-gray-300"
-            >
-              Overlay URL
-            </label>
-            <div className="mt-1 flex rounded-md shadow-sm">
-              <input
-                type="text"
-                id="overlayUrlInput"
-                readOnly
-                value={overlayFullUrl}
-                className="flex-1 block w-full rounded-none rounded-l-md bg-gray-900 border border-gray-600 px-3 py-2 text-xs md:text-sm"
-              />
-              <button
-                onClick={handleCopyOverlayUrl}
-                className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600 text-sm"
-              >
-                {overlayCopied ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
-            <p className="mt-1 text-xs text-gray-500">
-              Paste this URL into a Browser Source in OBS.
-            </p>
-          </div>
-
-          <div className="mt-6">
-            <h4 className="font-semibold text-gray-200 mb-2">Preview</h4>
-            <div className="bg-gray-900/50 p-4 rounded-lg flex justify-center items-center border border-gray-700">
-              <OverlayCard
-                server={overlayPreviewServer}
-                prediction={overlayPreviewNextBoss}
-                now={now}
-                showRegion={overlaySettings.showRegion}
-                lang={overlaySettings.lang}
-              />
-            </div>
-          </div>
-        </Card>
-
-        {/* Next Boss Card - Normal Position with Ref */}
-        {nextOverallPrediction && nextOverallPrediction.prediction.nextSpawn >= now && (
-          <div
-            ref={nextBossCardRef}
-            className="bg-gray-800/50 border border-primary-500/30 rounded-xl p-6 shadow-lg shadow-primary-500/5 mb-8"
-          >
-            <p className="text-sm font-semibold uppercase tracking-wider text-primary-400 mb-2">
-              Next Boss: {nextOverallPrediction.boss.name}
-            </p>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-              <p className="text-5xl font-mono font-bold text-primary-300">
-                {formatDuration(
-                  (nextOverallPrediction.prediction.nextSpawn.getTime() -
-                    now.getTime()) /
-                  1000
-                )}
+              <div className="mt-1 flex rounded-md shadow-sm">
+                <input
+                  type="text"
+                  id="overlayUrlInput"
+                  readOnly
+                  value={overlayFullUrl}
+                  className="flex-1 block w-full rounded-none rounded-l-md bg-gray-900 border border-gray-600 px-3 py-2 text-xs md:text-sm"
+                />
+                <button
+                  onClick={handleCopyOverlayUrl}
+                  className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600 text-sm"
+                >
+                  {overlayCopied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Paste this URL into a Browser Source in OBS.
               </p>
-              <div className="text-sm text-right mt-2 md:mt-0">
-                <p>
-                  {getTimezoneLabel(settings.timezone || 'UTC+8')}:{' '}
-                  {formatTime(
-                    nextOverallPrediction.prediction.nextSpawn,
-                    settings.use24h,
-                    settings.timezone || 'UTC+8'
-                  )}
-                </p>
-                <p className="text-gray-400 text-xs">
-                  Server:{' '}
-                  {formatTime(
-                    nextOverallPrediction.prediction.nextSpawn,
-                    true
-                  )}{' '}
-                  (UTC+7)
-                </p>
-                <PredictionSourceBadge
-                  prediction={nextOverallPrediction.prediction}
-                  reportsCount={
-                    getReportsFor(
-                      nextOverallPrediction.boss.id,
-                      selectedServer.id
-                    ).length
-                  }
+            </div>
+
+            <div className="mt-6">
+              <h4 className="font-semibold text-gray-200 mb-2">Preview</h4>
+              <div className="bg-gray-900/50 p-4 rounded-lg flex justify-center items-center border border-gray-700">
+                <OverlayCard
+                  server={overlayPreviewServer}
+                  prediction={overlayPreviewNextBoss}
+                  now={now}
+                  showRegion={overlaySettings.showRegion}
+                  lang={overlaySettings.lang}
                 />
               </div>
             </div>
-          </div>
-        )}
+          </Card>
 
-        {/* Floating Next Boss Card - Bottom Right */}
-        {(() => {
-          const shouldShowFloating = nextOverallPrediction &&
-            nextOverallPrediction.prediction.nextSpawn >= now &&
-            !isNextBossCardVisible;
-
-          return shouldShowFloating && (
+          {/* Next Boss Card - Normal Position with Ref */}
+          {nextOverallPrediction && nextOverallPrediction.prediction.nextSpawn >= now && (
             <div
-              className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 duration-300 cursor-pointer"
-              onClick={() => {
-                nextBossCardRef.current?.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'center'
-                });
-              }}
+              ref={nextBossCardRef}
+              className="bg-gray-800/50 border border-primary-500/30 rounded-xl p-6 shadow-lg shadow-primary-500/5 mb-8"
             >
-              <div className="bg-gray-800/95 backdrop-blur-sm border border-primary-500/40 rounded-xl p-4 shadow-2xl shadow-primary-500/20 max-w-sm hover:border-primary-500/60 transition-colors">
-                <p className="text-xs font-semibold uppercase tracking-wider text-primary-400 mb-2">
-                  Next Boss: {nextOverallPrediction.boss.name}
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary-400 mb-2">
+                Next Boss: {nextOverallPrediction.boss.name}
+              </p>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <p className="text-5xl font-mono font-bold text-primary-300">
+                  {formatDuration(
+                    (nextOverallPrediction.prediction.nextSpawn.getTime() -
+                      now.getTime()) /
+                    1000
+                  )}
                 </p>
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-3xl font-mono font-bold text-primary-300">
-                    {formatDuration(
-                      (nextOverallPrediction.prediction.nextSpawn.getTime() -
-                        now.getTime()) /
-                      1000
+                <div className="text-sm text-right mt-2 md:mt-0">
+                  <p>
+                    {getTimezoneLabel(settings.timezone || 'UTC+8')}:{' '}
+                    {formatTime(
+                      nextOverallPrediction.prediction.nextSpawn,
+                      settings.use24h,
+                      settings.timezone || 'UTC+8'
                     )}
                   </p>
-                  <div className="text-xs text-right">
-                    <p className="text-gray-200">
-                      {formatTime(
-                        nextOverallPrediction.prediction.nextSpawn,
-                        settings.use24h,
-                        settings.timezone || 'UTC+8'
+                  <p className="text-gray-400 text-xs">
+                    Server:{' '}
+                    {formatTime(
+                      nextOverallPrediction.prediction.nextSpawn,
+                      true
+                    )}{' '}
+                    (UTC+7)
+                  </p>
+                  <PredictionSourceBadge
+                    prediction={nextOverallPrediction.prediction}
+                    reportsCount={
+                      getReportsFor(
+                        nextOverallPrediction.boss.id,
+                        selectedServer.id
+                      ).length
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Floating Next Boss Card - Bottom Right */}
+          {(() => {
+            const shouldShowFloating = nextOverallPrediction &&
+              nextOverallPrediction.prediction.nextSpawn >= now &&
+              !isNextBossCardVisible;
+
+            return shouldShowFloating && (
+              <div
+                className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 duration-300 cursor-pointer"
+                onClick={() => {
+                  nextBossCardRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                  });
+                }}
+              >
+                <div className="bg-gray-800/95 backdrop-blur-sm border border-primary-500/40 rounded-xl p-4 shadow-2xl shadow-primary-500/20 max-w-sm hover:border-primary-500/60 transition-colors">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-primary-400 mb-2">
+                    Next Boss: {nextOverallPrediction.boss.name}
+                  </p>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-3xl font-mono font-bold text-primary-300">
+                      {formatDuration(
+                        (nextOverallPrediction.prediction.nextSpawn.getTime() -
+                          now.getTime()) /
+                        1000
                       )}
                     </p>
-                    <p className="text-gray-400 text-[10px]">
-                      {formatTime(
-                        nextOverallPrediction.prediction.nextSpawn,
-                        true
-                      )}{' '}
-                      (UTC+7)
-                    </p>
-                    <div className="mt-1">
-                      <PredictionSourceBadge
-                        prediction={nextOverallPrediction.prediction}
-                        reportsCount={
-                          getReportsFor(
-                            nextOverallPrediction.boss.id,
-                            selectedServer.id
-                          ).length
-                        }
-                      />
+                    <div className="text-xs text-right">
+                      <p className="text-gray-200">
+                        {formatTime(
+                          nextOverallPrediction.prediction.nextSpawn,
+                          settings.use24h,
+                          settings.timezone || 'UTC+8'
+                        )}
+                      </p>
+                      <p className="text-gray-400 text-[10px]">
+                        {formatTime(
+                          nextOverallPrediction.prediction.nextSpawn,
+                          true
+                        )}{' '}
+                        (UTC+7)
+                      </p>
+                      <div className="mt-1">
+                        <PredictionSourceBadge
+                          prediction={nextOverallPrediction.prediction}
+                          reportsCount={
+                            getReportsFor(
+                              nextOverallPrediction.boss.id,
+                              selectedServer.id
+                            ).length
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
 
-        {/* Search + filters */}
-        <Card className="mb-8">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <input
-              type="text"
-              placeholder="Search by name or region..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-grow w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-            />
-            <label className="flex items-center space-x-2 whitespace-nowrap">
+          {/* Search + filters */}
+          <Card className="mb-8">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
               <input
-                type="checkbox"
-                checked={showOnlySoon}
-                onChange={(e) => setShowOnlySoon(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-500 text-primary-600 bg-gray-800 focus:ring-primary-500"
+                type="text"
+                placeholder="Search by name or region..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-grow w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
               />
-              <span className="text-sm text-gray-300">
-                Only spawning soon (6h)
-              </span>
-            </label>
+              <label className="flex items-center space-x-2 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={showOnlySoon}
+                  onChange={(e) => setShowOnlySoon(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-500 text-primary-600 bg-gray-800 focus:ring-primary-500"
+                />
+                <span className="text-sm text-gray-300">
+                  Only spawning soon (6h)
+                </span>
+              </label>
+            </div>
+          </Card>
+
+          <div className="border-b border-gray-700 mb-8">
+            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+              {(['ALL', 'FIELD', 'DESTROYER', 'FAVORITES'] as BossFilter[]).map(
+                (tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`${activeTab === tab
+                      ? 'border-primary-500 text-primary-400'
+                      : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500'
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm capitalize`}
+                  >
+                    {tab.toLowerCase()}
+                  </button>
+                )
+              )}
+            </nav>
           </div>
-        </Card>
 
-        <div className="border-b border-gray-700 mb-8">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            {(['ALL', 'FIELD', 'DESTROYER', 'FAVORITES'] as BossFilter[]).map(
-              (tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`${activeTab === tab
-                    ? 'border-primary-500 text-primary-400'
-                    : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500'
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm capitalize`}
-                >
-                  {tab.toLowerCase()}
-                </button>
-              )
-            )}
-          </nav>
-        </div>
+          <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs text-gray-400 uppercase font-bold tracking-wider mb-8">
+            <div className="col-span-3">Boss Info</div>
+            <div className="col-span-2">Spawn Basis</div>
+            <div className="col-span-2">Region</div>
+            <div className="col-span-3">Next Spawn &amp; Status</div>
+          </div>
 
-        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs text-gray-400 uppercase font-bold tracking-wider mb-8">
-          <div className="col-span-3">Boss Info</div>
-          <div className="col-span-2">Spawn Basis</div>
-          <div className="col-span-2">Region</div>
-          <div className="col-span-3">Next Spawn &amp; Status</div>
-        </div>
+          <div className="space-y-4 mb-8">
+            {displayedBosses.length > 0 ? (
+              displayedBosses.map(({ boss, prediction }) => {
+                const status = getStatus(
+                  prediction?.nextSpawn ?? null,
+                  now
+                );
+                const isReportable =
+                  boss.type === 'FIELD' && boss.spawnMode === 'COOLDOWN';
+                const reportsForBoss = isReportable
+                  ? getReportsFor(boss.id, selectedServer.id)
+                  : [];
 
-        <div className="space-y-4 mb-8">
-          {displayedBosses.length > 0 ? (
-            displayedBosses.map(({ boss, prediction }) => {
-              const status = getStatus(
-                prediction?.nextSpawn ?? null,
-                now
-              );
-              const isReportable =
-                boss.type === 'FIELD' && boss.spawnMode === 'COOLDOWN';
-              const reportsForBoss = isReportable
-                ? getReportsFor(boss.id, selectedServer.id)
-                : [];
-
-              return (
-                <div
-                  key={boss.id}
-                  className={`block md:grid grid-cols-12 gap-4 items-center bg-gray-800/50 border border-gray-700/60 rounded-xl p-4 transition-all duration-300 ${status.isSoon
-                    ? 'border-l-4 border-emerald-400 bg-emerald-500/5'
-                    : 'border-l-4 border-transparent'
-                    }`}
-                >
-                  {/* Col 1: Boss Info */}
-                  <div className="col-span-3 flex items-center gap-4">
-                    <button
-                      onClick={() => toggleFavorite(boss.id)}
-                      className={
-                        isFavorite(boss.id)
-                          ? 'text-yellow-400'
-                          : 'text-gray-600 hover:text-yellow-500'
-                      }
-                      aria-label="Toggle Favorite"
-                    >
-                      <StarIcon filled={isFavorite(boss.id)} />
-                    </button>
-                    <div className="text-center w-12 flex-shrink-0">
-                      <p className="text-xs text-gray-400">LV</p>
-                      <p className="text-2xl font-bold">{boss.level}</p>
-                    </div>
-                    <div className="flex-grow">
-                      <h3 className="text-xl font-bold text-primary-400">
-                        {boss.name}
-                      </h3>
-                      <p className="text-sm text-gray-400 capitalize">
-                        {boss.type.toLowerCase()}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Col 2: Spawn Basis */}
-                  <div className="col-span-2 text-sm mt-4 md:mt-0">
-                    <p className="font-semibold text-gray-200 md:hidden mb-1">
-                      Spawn Basis
-                    </p>
-                    {boss.spawnMode === 'COOLDOWN' ? (
-                      <p>Respawn: {boss.cooldownHours}h</p>
-                    ) : (
-                      <ul className="text-xs">
-                        {getScheduleSummary(boss).map((line) => (
-                          <li key={line}>{line}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-
-                  {/* Col 3: Region */}
-                  <div className="col-span-2 text-sm mt-4 md:mt-0">
-                    <p className="font-semibold text-gray-200 md:hidden mb-1">
-                      Region
-                    </p>
-                    <p>{boss.spawnRegion}</p>
-                  </div>
-
-                  {/* Col 4: Next Spawn & Status */}
-                  <div className="col-span-3 text-sm mt-4 md:mt-0">
-                    <p className="font-semibold text-gray-200 md:hidden mb-1">
-                      Next Spawn &amp; Status
-                    </p>
-                    <div className="flex flex-col md:flex-row gap-4 justify-between">
-                      <div>
-                        {prediction && prediction.nextSpawn >= now ? (
-                          <>
-                            <p className="text-gray-300">
-                              {getTimezoneLabel(
-                                settings.timezone || 'UTC+8'
-                              )}
-                              :{' '}
-                              {formatTime(
-                                prediction.nextSpawn,
-                                settings.use24h,
-                                settings.timezone || 'UTC+8'
-                              )}
-                            </p>
-                            <p className="text-gray-400 text-xs">
-                              Server:{' '}
-                              {formatTime(
-                                prediction.nextSpawn,
-                                true
-                              )}{' '}
-                              (UTC+7)
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-gray-400">
-                            {prediction ? 'Awaiting report...' : 'Unknown'}
-                          </p>
-                        )}
+                return (
+                  <div
+                    key={boss.id}
+                    className={`block md:grid grid-cols-12 gap-4 items-center bg-gray-800/50 border border-gray-700/60 rounded-xl p-4 transition-all duration-300 ${status.isSoon
+                      ? 'border-l-4 border-emerald-400 bg-emerald-500/5'
+                      : 'border-l-4 border-transparent'
+                      }`}
+                  >
+                    {/* Col 1: Boss Info */}
+                    <div className="col-span-3 flex items-center gap-4">
+                      <button
+                        onClick={() => toggleFavorite(boss.id)}
+                        className={
+                          isFavorite(boss.id)
+                            ? 'text-yellow-400'
+                            : 'text-gray-600 hover:text-yellow-500'
+                        }
+                        aria-label="Toggle Favorite"
+                      >
+                        <StarIcon filled={isFavorite(boss.id)} />
+                      </button>
+                      <div className="text-center w-12 flex-shrink-0">
+                        <p className="text-xs text-gray-400">LV</p>
+                        <p className="text-2xl font-bold">{boss.level}</p>
                       </div>
-                      <div>
-                        {prediction && prediction.nextSpawn >= now ? (
-                          <div className="flex flex-col items-start md:items-end gap-2">
-                            <p className="font-mono text-lg text-primary-300">
-                              {formatDuration(
-                                (prediction.nextSpawn.getTime() -
-                                  now.getTime()) /
-                                1000
-                              )}
+                      <div className="flex-grow">
+                        <h3 className="text-xl font-bold text-primary-400">
+                          {boss.name}
+                        </h3>
+                        <p className="text-sm text-gray-400 capitalize">
+                          {boss.type.toLowerCase()}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Col 2: Spawn Basis */}
+                    <div className="col-span-2 text-sm mt-4 md:mt-0">
+                      <p className="font-semibold text-gray-200 md:hidden mb-1">
+                        Spawn Basis
+                      </p>
+                      {boss.spawnMode === 'COOLDOWN' ? (
+                        <p>Respawn: {boss.cooldownHours}h</p>
+                      ) : (
+                        <ul className="text-xs">
+                          {getScheduleSummary(boss).map((line) => (
+                            <li key={line}>{line}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    {/* Col 3: Region */}
+                    <div className="col-span-2 text-sm mt-4 md:mt-0">
+                      <p className="font-semibold text-gray-200 md:hidden mb-1">
+                        Region
+                      </p>
+                      <p>{boss.spawnRegion}</p>
+                    </div>
+
+                    {/* Col 4: Next Spawn & Status */}
+                    <div className="col-span-3 text-sm mt-4 md:mt-0">
+                      <p className="font-semibold text-gray-200 md:hidden mb-1">
+                        Next Spawn &amp; Status
+                      </p>
+                      <div className="flex flex-col md:flex-row gap-4 justify-between">
+                        <div>
+                          {prediction && prediction.nextSpawn >= now ? (
+                            <>
+                              <p className="text-gray-300">
+                                {getTimezoneLabel(
+                                  settings.timezone || 'UTC+8'
+                                )}
+                                :{' '}
+                                {formatTime(
+                                  prediction.nextSpawn,
+                                  settings.use24h,
+                                  settings.timezone || 'UTC+8'
+                                )}
+                              </p>
+                              <p className="text-gray-400 text-xs">
+                                Server:{' '}
+                                {formatTime(
+                                  prediction.nextSpawn,
+                                  true
+                                )}{' '}
+                                (UTC+7)
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-gray-400">
+                              {prediction ? 'Awaiting report...' : 'Unknown'}
                             </p>
+                          )}
+                        </div>
+                        <div>
+                          {prediction && prediction.nextSpawn >= now ? (
+                            <div className="flex flex-col items-start md:items-end gap-2">
+                              <p className="font-mono text-lg text-primary-300">
+                                {formatDuration(
+                                  (prediction.nextSpawn.getTime() -
+                                    now.getTime()) /
+                                  1000
+                                )}
+                              </p>
+                              <span
+                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${status.color}`}
+                              >
+                                {status.label}
+                              </span>
+                            </div>
+                          ) : (
                             <span
                               className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${status.color}`}
                             >
                               {status.label}
                             </span>
-                          </div>
-                        ) : (
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${status.color}`}
-                          >
-                            {status.label}
-                          </span>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <div className="mt-2 flex flex-col md:flex-row gap-2 items-start justify-between">
-                      <PredictionSourceBadge
-                        prediction={prediction}
-                        reportsCount={reportsForBoss.length}
-                      />
-                      {isReportable && (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() =>
-                              setReportModalState({
-                                isOpen: true,
-                                boss,
-                              })
-                            }
-                          >
-                            Report Kill
-                          </Button>
-                          {reportsForBoss.length > 0 && (
-                            <button
+                      <div className="mt-2 flex flex-col md:flex-row gap-2 items-start justify-between">
+                        <PredictionSourceBadge
+                          prediction={prediction}
+                          reportsCount={reportsForBoss.length}
+                        />
+                        {isReportable && (
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="secondary"
                               onClick={() =>
-                                setViewReportsModalState({
+                                setReportModalState({
                                   isOpen: true,
                                   boss,
                                 })
                               }
-                              className="text-xs text-primary-400 hover:underline"
                             >
-                              View
-                            </button>
-                          )}
-                        </div>
-                      )}
+                              Report Kill
+                            </Button>
+                            {reportsForBoss.length > 0 && (
+                              <button
+                                onClick={() =>
+                                  setViewReportsModalState({
+                                    isOpen: true,
+                                    boss,
+                                  })
+                                }
+                                className="text-xs text-primary-400 hover:underline"
+                              >
+                                View
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center py-12 text-gray-500 bg-gray-800/50 rounded-xl">
-              <h3 className="text-lg font-semibold text-gray-300">
-                No Bosses Found
-              </h3>
-              {activeTab === 'FAVORITES' && favorites.length === 0 ? (
-                <p className="mt-1 text-sm">
-                  You have no favorite bosses yet. Click the star on a boss
-                  to add it here.
-                </p>
-              ) : (
-                <p className="mt-1 text-sm">
-                  No bosses match your current filters.
-                </p>
-              )}
-            </div>
-          )}
+                );
+              })
+            ) : (
+              <div className="text-center py-12 text-gray-500 bg-gray-800/50 rounded-xl">
+                <h3 className="text-lg font-semibold text-gray-300">
+                  No Bosses Found
+                </h3>
+                {activeTab === 'FAVORITES' && favorites.length === 0 ? (
+                  <p className="mt-1 text-sm">
+                    You have no favorite bosses yet. Click the star on a boss
+                    to add it here.
+                  </p>
+                ) : (
+                  <p className="mt-1 text-sm">
+                    No bosses match your current filters.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -19,6 +19,12 @@ import Settings from './pages/Settings';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import About from './pages/About';
 
+import GuidesHome from './pages/guides/GuidesHome';
+import GettingStartedGuide from './pages/guides/GettingStartedGuide';
+import WorldBossTimerGuide from './pages/guides/WorldBossTimerGuide';
+import OverlaySetupGuide from './pages/guides/OverlaySetupGuide';
+import RedeemCodesGuide from './pages/guides/RedeemCodesGuide';
+
 // Always lazy load Admin, access is controlled by Route condition
 const Admin = React.lazy(() => import('./pages/Admin'));
 
@@ -40,6 +46,13 @@ const App: React.FC = () => {
             <Route path="builds/class-tag" element={<ClassTagPlanner />} />
             <Route path="builds/gear" element={<GearPlanner />} />
             <Route path="codes" element={<CodesPage />} />
+
+            {/* Guides */}
+            <Route path="guides" element={<GuidesHome />} />
+            <Route path="guides/getting-started" element={<GettingStartedGuide />} />
+            <Route path="guides/world-boss-timer" element={<WorldBossTimerGuide />} />
+            <Route path="guides/overlay-setup" element={<OverlaySetupGuide />} />
+            <Route path="guides/redeem-codes-safely" element={<RedeemCodesGuide />} />
 
             {/* Admin route - ONLY on localhost */}
             {isLocalhost && Admin && (

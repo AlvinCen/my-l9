@@ -61,7 +61,7 @@ const Dashboard: React.FC = () => {
   const secondBossInfo = upcomingBosses[1];
 
   return (
-    <div>
+    <div className="flex flex-col gap-6">
       {/* Main Content: Next Boss */}
       <div className="grid grid-cols-1 gap-6">
         {/* Next Boss Card */}
@@ -113,20 +113,26 @@ const Dashboard: React.FC = () => {
         adFormat="auto"
         fullWidthResponsive={true}
         style={{ display: 'block' }}
-        className="my-4"
       />
 
       {/* Welcome Section */}
-      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-8">
+      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
         <h2 className="text-2xl font-bold text-white mb-4">Welcome to Lordnine Tools</h2>
-        <p className="text-gray-300 mb-4">
-          Maximize your efficiency in Lordnine with our comprehensive utility suite.
-          Track world boss spawn times, coordinate with your server, and never miss a loot drop again.
-        </p>
-        <p className="text-gray-300">
-          Our <strong>Boss Timer</strong> automatically adjusts to your local timezone and server maintenance schedule, ensuring you have the most accurate spawn predictions available.
-          Join our community of players and help keep the data fresh by reporting kills and verifying spawn times.
-        </p>
+        <div className="prose prose-invert max-w-none text-gray-300">
+          <p>
+            <strong>Lordnine Tools</strong> is your essential companion for mastering the game in the SEA region.
+            We provide a suite of utilities designed to help you track world bosses, plan your builds, and redeem the latest codes.
+          </p>
+          <p>
+            Whether you are a hardcore raider or a casual player, our tools are built to give you the edge you need.
+          </p>
+          <ul className="list-disc pl-5 space-y-1 mt-2">
+            <li><strong>Boss Timer:</strong> Accurate spawn predictions based on community reports and fixed cooldowns.</li>
+            <li><strong>Builds:</strong> Plan your character's growth with our Class & Tag and Gear planners.</li>
+            <li><strong>Codes:</strong> Stay up-to-date with the latest redeem codes for free in-game items.</li>
+            <li><strong>Guides:</strong> Read our in-depth tutorials to learn more about game mechanics and tool usage.</li>
+          </ul>
+        </div>
       </div>
 
       {/* Quick Links */}
@@ -135,6 +141,7 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <FeatureCard to="/boss-timer" icon={<ClockIcon />} title="Boss Timer" description="Track world boss schedules and stream overlay." />
           <FeatureCard to="/codes" icon={<GiftIcon />} title="Codes" description="Redeem codes and view rewards." />
+          <FeatureCard to="/guides" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>} title="Guides" description="Tutorials, tips, and how-to articles." />
         </div>
       </div>
     </div>

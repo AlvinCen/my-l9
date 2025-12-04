@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -88,6 +89,22 @@ const Codes: React.FC = () => {
     return (
         <div className="space-y-8">
             <PageHeader title="Codes" description="Track and share Lordnine redeem codes." />
+
+            <Card>
+                <div className="prose prose-invert max-w-none text-gray-300">
+                    <p>
+                        Redeem codes are a great way to get free items in Lordnine.
+                        We list all currently active codes below, along with their rewards and region restrictions.
+                    </p>
+                    <p className="text-sm">
+                        <strong>Disclaimer:</strong> We are not affiliated with the game developers.
+                        Codes are community-sourced and may expire at any time.
+                        Always redeem codes through the official game launcher or website.
+                        <br />
+                        <Link to="/guides/redeem-codes-safely" className="text-blue-400 hover:underline">Read our guide on redeeming codes safely.</Link>
+                    </p>
+                </div>
+            </Card>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
