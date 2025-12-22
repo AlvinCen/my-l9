@@ -985,7 +985,7 @@ const BossTimer: React.FC = () => {
             <h3 className="text-sm font-semibold uppercase tracking-wider text-primary-400 mb-3">
               Southeast Asia Server
             </h3>
-            {['Horatio', 'Yvonne', 'Douglas', 'Santiago'].map((group) => (
+            {Object.keys(serverGroups).map((group) => (
               <div key={group}>
                 <p className="text-xs text-gray-400 font-bold mt-2 mb-1">
                   {group}

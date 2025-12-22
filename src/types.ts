@@ -25,7 +25,7 @@ export interface Boss {
 export interface GameServer {
   id: string;
   name: string;
-  group: 'Horatio' | 'Yvonne' | 'Douglas' | 'Santiago';
+  group: 'Horatio' | 'Yvonne' | 'Douglas' | 'Santiago' | 'Medea';
   region: 'SEA';
 }
 
